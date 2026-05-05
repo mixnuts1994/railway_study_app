@@ -1,0 +1,8 @@
+{
+  "name": "鉄道設計技士 過去問道場",
+  "short_name": "過去問道場",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f3f4f6",
+  "theme_color": "#3b82f6"
+}

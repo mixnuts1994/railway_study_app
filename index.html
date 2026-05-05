@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>鉄道設計技士 過去問道場</title>
+    <link rel="manifest" href="manifest.json">
+    <!-- 紙吹雪アニメーション用ライブラリ -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --success: #10b981;
+            --success-dark: #059669;
+            --danger: #ef4444;
+            --danger-dark: #dc2626;
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-sub: #6b7280;
+            --border: #e5e7eb;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        /* ダークモード時のカラーパレット */
+        [data-theme="dark"] {
+            --bg-color: #111827;
+            --card-bg: #1f2937;
+            --text-main: #f9fafb;
+            --text-sub: #9ca3af;
+            --border: #374151;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0; padding: 0; line-height: 1.6;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* ヘッダーとプログレスバー */
+        .header {
+            background-color: var(--card-bg);
+            padding: 15px 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .header h1 { margin: 0; font-size: 1.2em; font-weight: 700; color: var(--primary); }
+        .theme-toggle { background: none; border: none; font-size: 1.5em; cursor: pointer; color: var(--text-main); }
+        
+        .progress-container { width: 100%; height: 6px; background-color: var(--border); }
+        .progress-bar { height: 100%; background-color: var(--primary); width: 0%; transition: width 0.4s ease; }
+
+        .container { max-width: 600px; margin: 20px auto; padding: 0 15px; padding-bottom: 80px; }
+
+        /* コントロールパネル */
+        .controls { background: var(--card-bg); padding: 20px; border-radius: 16px; box-shadow: var(--shadow); margin-bottom: 20px; border: 1px solid var(--border); }
+        select { width: 100%; padding: 12px; margin-bottom: 12px; font-size: 1em; border-radius: 8px; border: 1px solid var(--border); background-color: var(--bg-color); color: var(--text-main); outline: none; }
+        select:focus { border-color: var(--primary); }
+
+        /* カードデザイン */
+        .card { background: var(--card-bg); border-radius: 16px; padding: 20px; box-shadow: var(--shadow); margin-bottom: 20px; border: 1px solid var(--border); }
+        .stats-badge { display: inline-block; background: var(--bg-color); color: var(--text-sub); padding: 4px 10px; border-radius: 20px; font-size: 0.8em; font-weight: 600; margin-bottom: 10px; }
+        .question-text { font-size: 1.1em; font-weight: 600; white-space: pre-wrap; margin-bottom: 15px; }
+        .image-box img { max-width: 100%; border-radius: 8px; margin-top: 10px; }
+
+        /* 解説エリア */
+        .answer-section { display: none; margin-top: 20px; animation: fadeIn 0.3s ease; }
+        .answer-box { background-color: rgba(59, 130, 246, 0.1); border-left: 4px solid var(--primary); padding: 15px; border-radius: 0 8px 8px 0; margin-bottom: 20px; }
+        .explanation { white-space: pre-wrap; font-size: 0.95em; color: var(--text-main); }
+
+        /* ボタンデザイン */
+        button {
+            width: 100%; padding: 14px; font-size: 1.1em; font-weight: bold; border: none; border-radius: 12px; cursor: pointer; color: white; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button:active { transform: translateY(2px); box-shadow: none; }
+        .btn-primary { background-color: var(--primary); }
+        .btn-primary:hover { background-color: var(--primary-dark); }
+        .btn-success { background-color: var(--success); }
+        .btn-success:hover { background-color: var(--success-dark); }
+        .btn-danger { background-color: var(--danger); }
+        .btn-danger:hover { background-color: var(--danger-dark); }
+        .btn-master { background-color: #f59e0b; margin-top: 10px; color: #fff;}
+        .btn-master:hover { background-color: #d97706; }
+
+        .btn-group { display: flex; gap: 12px; margin-top: 15px; }
+        .hidden { display: none !important; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<!-- ヘッダー -->
+<div class="header">
+    <h1>🚆 鉄道設計技士アプリ</h1>
+    <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+</div>
+<div class="progress-container"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="container">
+    <!-- 設定エリア -->
+    <div class="controls" id="controlPanel">
+        <select id="modeSelect">
+            <option value="normal">📘 通常モード（全問）</option>
+            <option value="review">🔥 復習モード（弱点克服）</option>
+        </select>
+        <select id="yearSelect">
+            <option value="2021">2021年度</option>
+            <option value="2022">2022年度</option>
+            <option value="2023">2023年度</option>
+            <option value="2024">2024年度</option>
+            <option value="2025">2025年度</option>
+        </select>
+        <select id="subjectSelect">
+            <option value="共通">共通</option>
+            <option value="専門Ⅰ">専門Ⅰ</option>
+            <option value="専門Ⅱ">専門Ⅱ</option>
+        </select>
+        <button class="btn-primary" onclick="loadQuestions()">🚀 学習をスタート</button>
+    </div>
+
+    <!-- メッセージエリア -->
+    <div id="messageArea" class="card hidden" style="text-align: center; font-weight: bold; font-size: 1.2em;"></div>
+
+    <!-- 問題表示エリア -->
+    <div id="quizArea" class="hidden">
+        <div class="card">
+            <div style="display: flex; justify-content: space-between;">
+                <span class="stats-badge" id="progressText">Q 1/10</span>
+                <span class="stats-badge" id="scoreText">正解 0 | 不正解 0</span>
+            </div>
+            <div class="question-text" id="questionText"></div>
+            <div class="image-box" id="questionImage"></div>
+        </div>
+
+        <button id="showAnsBtn" class="btn-primary" onclick="showAnswer()">👁️ 正解と解説を見る</button>
+
+        <!-- 解説・自己評価エリア -->
+        <div id="answerArea" class="answer-section">
+            <div class="answer-box">
+                <h3 style="margin-top:0; color: var(--primary);">【正解】 <span id="correctAnswer"></span></h3>
+                <div class="image-box" id="answerImage"></div>
+            </div>
+            <div class="card">
+                <h4 style="margin-top:0; border-bottom: 2px solid var(--border); padding-bottom: 10px;">📖 解説</h4>
+                <div class="explanation" id="explanationText"></div>
+            </div>
+            
+            <h4 style="text-align: center; color: var(--text-sub);">🤔 この問題、どうだった？</h4>
+            <div class="btn-group">
+                <button class="btn-success" onclick="recordResult(true)">⭕ 正解！</button>
+                <button class="btn-danger" onclick="recordResult(false)">❌ 間違えた...</button>
+            </div>
+            <p style="text-align:center; font-size: 0.8em; color: var(--text-sub); margin-top:5px;">※PCの方はキーボードの [1] で正解、[2] で不正解を選べます</p>
+
+            <button id="masterBtn" class="btn-master hidden" onclick="recordResult(true, true)">✨ もう完璧！（復習リストから外す）</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- ダークモード制御 ---
+    let isDark = false;
+    function toggleTheme() {
+        isDark = !isDark;
+        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        document.querySelector('.theme-toggle').textContent = isDark ? '☀️' : '🌙';
+        localStorage.setItem('railway_theme', isDark ? 'dark' : 'light');
+    }
+    // 初期読み込み時のテーマ反映
+    if (localStorage.getItem('railway_theme') === 'dark' || (!localStorage.getItem('railway_theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        toggleTheme();
+    }
+
+    // --- アプリのロジック ---
+    let questions = [];
+    let targetQuestions = [];
+    let currentIndex = 0;
+    let userProgress = JSON.parse(localStorage.getItem('railway_progress')) || {};
+
+    function saveProgress() { localStorage.setItem('railway_progress', JSON.stringify(userProgress)); }
+
+    async function loadQuestions() {
+        const year = document.getElementById('yearSelect').value;
+        const subject = document.getElementById('subjectSelect').value;
+        const mode = document.getElementById('modeSelect').value;
+        const dbUrl = `exams/${year}/${subject}/qa_database.json`;
+
+        try {
+            const response = await fetch(dbUrl);
+            if (!response.ok) throw new Error("データなし");
+            questions = await response.json();
+            
+            if (mode === 'review') {
+                targetQuestions = questions.filter(q => userProgress[q.id] && userProgress[q.id].needs_review);
+            } else {
+                targetQuestions = questions;
+            }
+
+            if (targetQuestions.length === 0) {
+                showMessage(mode === 'review' ? "🎉 復習が必要な問題はありません！完璧です！" : "⚠️ まだデータがありません。");
+                return;
+            }
+
+            currentIndex = 0;
+            document.getElementById('controlPanel').classList.add('hidden'); // 学習開始時にパネルを隠す
+            document.getElementById('quizArea').classList.remove('hidden');
+            document.getElementById('messageArea').classList.add('hidden');
+            displayQuestion();
+        } catch (error) {
+            showMessage("⚠️ この分野のデータはサーバーに存在しません。");
+        }
+    }
+
+    function showMessage(msg) {
+        document.getElementById('controlPanel').classList.remove('hidden');
+        document.getElementById('quizArea').classList.add('hidden');
+        const msgArea = document.getElementById('messageArea');
+        msgArea.innerHTML = msg + '<br><br><button class="btn-secondary" onclick="location.reload()">トップに戻る</button>';
+        msgArea.classList.remove('hidden');
+    }
+
+    function updateProgressBar() {
+        const percentage = ((currentIndex + 1) / targetQuestions.length) * 100;
+        document.getElementById('progressBar').style.width = percentage + '%';
+    }
+
+    function displayQuestion() {
+        if (currentIndex >= targetQuestions.length) currentIndex = 0;
+        const q = targetQuestions[currentIndex];
+        
+        if (!userProgress[q.id]) userProgress[q.id] = { correct: 0, incorrect: 0, needs_review: false };
+        const p = userProgress[q.id];
+
+        document.getElementById('progressText').textContent = `Q ${currentIndex + 1} / ${targetQuestions.length}`;
+        document.getElementById('scoreText').textContent = `正解 ${p.correct} | 不正解 ${p.incorrect}`;
+        document.getElementById('questionText').textContent = q.question_text;
+
+        const qImgDiv = document.getElementById('questionImage');
+        qImgDiv.innerHTML = q.image_file ? `<img src="exams/${document.getElementById('yearSelect').value}/${document.getElementById('subjectSelect').value}/${q.image_file}">` : '';
+
+        document.getElementById('answerArea').style.display = 'none';
+        document.getElementById('showAnsBtn').style.display = 'block';
+        
+        document.getElementById('masterBtn').classList.toggle('hidden', document.getElementById('modeSelect').value !== 'review');
+        updateProgressBar();
+    }
+
+    function showAnswer() {
+        const q = targetQuestions[currentIndex];
+        document.getElementById('correctAnswer').textContent = q.correct_answer || "（画像参照）";
+        document.getElementById('explanationText').innerHTML = q.explanation_text.replace(/\n/g, '<br>');
+
+        const aImgDiv = document.getElementById('answerImage');
+        aImgDiv.innerHTML = q.correct_answer_image ? `<img src="exams/${document.getElementById('yearSelect').value}/${document.getElementById('subjectSelect').value}/${q.correct_answer_image}">` : '';
+
+        document.getElementById('showAnsBtn').style.display = 'none';
+        document.getElementById('answerArea').style.display = 'block';
+        window.scrollTo({ top: document.getElementById('answerArea').offsetTop - 60, behavior: 'smooth' });
+    }
+
+    function recordResult(isCorrect, removeFromReview = false) {
+        const q = targetQuestions[currentIndex];
+        const p = userProgress[q.id];
+
+        if (isCorrect) {
+            p.correct += 1;
+            if (removeFromReview) {
+                p.needs_review = false;
+                fireConfetti(); // 完璧ボタンを押したら紙吹雪！
+            }
+        } else {
+            p.incorrect += 1;
+            p.needs_review = true;
+        }
+
+        saveProgress();
+        
+        setTimeout(() => {
+            currentIndex++;
+            if (currentIndex >= targetQuestions.length) {
+                alert("このセクションを最後まで解き終わりました！");
+                location.reload(); // 一周したらトップに戻る
+            } else {
+                displayQuestion();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }, removeFromReview ? 800 : 0); // 紙吹雪を見せるために少し待つ
+    }
+
+    // 紙吹雪アニメーション
+    function fireConfetti() {
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#3b82f6', '#10b981', '#f59e0b'] });
+    }
+
+    // キーボードショートカット (PC用)
+    document.addEventListener('keydown', (e) => {
+        if (document.getElementById('answerArea').style.display === 'block') {
+            if (e.key === '1') recordResult(true);
+            if (e.key === '2') recordResult(false);
+        } else if (document.getElementById('showAnsBtn').style.display === 'block' && (e.key === ' ' || e.key === 'Enter')) {
+            showAnswer();
+            e.preventDefault();
+        }
+    });
+</script>
+<script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('sw.js').then(function(registration) {
+                    console.log('オフライン化の準備が完了しました！', registration.scope);
+                }, function(err) {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
