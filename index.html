@@ -160,6 +160,12 @@
             </div>
             <p style="text-align:center; font-size: 0.8em; color: var(--text-sub); margin-top:5px;">※PCの方はキーボードの [1] で正解、[2] で不正解を選べます</p>
 
+            <!-- HTMLのボタン設置エリア -->
+                <div class="navigation-buttons">
+                <button onclick="prevQuestion()" class="nav-btn">◀ 前の問題</button>
+                <button onclick="skipQuestion()" class="nav-btn skip-btn">スキップ</button>
+                <button onclick="nextQuestion()" class="nav-btn">次の問題 ▶</button>
+            </div>
             <button id="masterBtn" class="btn-master hidden" onclick="recordResult(true, true)">✨ もう完璧！（復習リストから外す）</button>
         </div>
     </div>
